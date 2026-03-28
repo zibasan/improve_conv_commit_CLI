@@ -1,7 +1,7 @@
 {
   "name": "commit-wand",
   "private": false,
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A CLI to check and fix Conventional Commits",
   "type": "module",
   "main": "./dist/index.js",

@@ -1,5 +1,13 @@
 # 🪄 commit-wand (cw)
 
+[![npm version](https://img.shields.io/npm/v/commit-wand.svg?color=blue)](https://www.npmjs.com/package/commit-wand)
+[![npm downloads](https://img.shields.io/npm/dt/commit-wand.svg)](https://www.npmjs.com/package/commit-wand)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![npm unpacked size](https://img.shields.io/npm/unpacked-size/commit-wand.svg)](https://www.npmjs.com/package/commit-wand)
+[![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Biome](https://img.shields.io/badge/-Biome-60A5FA?logo=biome&logoColor=white)](https://biomejs.dev/)
+[![GitHub stars](https://img.shields.io/github/stars/zibasan/commit-wand.svg?style=social)](https://github.com/zibasan/commit-wand/stargazers)
+
 A magical CLI wand to check and fix Conventional Commits interactively.
 
 Stop wrestling with git hooks that just yell at you. `commit-wand` catches your invalid commit messages and gently guides you to fix them via an interactive prompt—so you never have to type `git commit --amend` again.
