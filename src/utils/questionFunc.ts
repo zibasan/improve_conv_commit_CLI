@@ -6,7 +6,7 @@ import Enquirer from 'enquirer';
 const { Input, Select, Confirm } = Enquirer as any;
 
 /**
- * プロンプトの実行に使う関数
+ * Functions used to execute prompts
  */
 // biome-ignore lint/suspicious/noExplicitAny: Due to incomplete type definition
 export async function runPrompt(prompt: any): Promise<unknown> {
@@ -14,9 +14,7 @@ export async function runPrompt(prompt: any): Promise<unknown> {
     return await prompt.run();
   } catch (e) {
     if (e === '') {
-      // 空文字エラーはCtrl+Cとみなし、SIGINTシグナルを発火
       process.emit('SIGINT');
-      // process.exit()が呼ばれるまで永遠に待機し、後続の処理をストップさせる
       return new Promise(() => {});
     }
     throw e;
@@ -24,9 +22,9 @@ export async function runPrompt(prompt: any): Promise<unknown> {
 }
 
 /**
- * テキストを入力させるプロンプト (初期値のサポート)
- * @param message プロンプトのメッセージ
- * @param initial 初期値(オプション)
+ * Prompt for text (initial value support)
+ *@param message prompt message
+ *@param initial initial value (optional)
  */
 export async function askInput(message: string, initial?: string): Promise<string> {
   const prompt = new Input({
@@ -39,9 +37,9 @@ export async function askInput(message: string, initial?: string): Promise<strin
 }
 
 /**
- * 選択肢から１つ選択させるプロンプト
- * @param message プロンプトのメッセージ
- * @param choices 選択肢<string[]>
+ * Prompt to choose one option
+ * @param message prompt message
+ * @param choices Choices <string[]>
  */
 export async function selectType(message: string, choices: string[]): Promise<string> {
   const prompt = new Select({
@@ -56,7 +54,7 @@ export async function selectType(message: string, choices: string[]): Promise<st
 }
 
 /**
- * Yes/Noを選択させる確認プロンプト
+ * Confirmation prompt to select Yes/No
  */
 export async function askConfirm(message: string, initial = true): Promise<boolean> {
   const prompt = new Confirm({
