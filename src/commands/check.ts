@@ -1,7 +1,8 @@
 import fs from 'node:fs';
+import * as prompt from '@clack/prompts';
 import parse from '@commitlint/parse';
 import chalk from 'chalk';
-import { askConfirm, askInput, selectType } from '../utils/questionFunc.js';
+import { runCommitMsgPrompt } from '../prompts.js';
 import { error, info, success, warn } from '../utils/symbols.js';
 
 export async function checkCommit(filePath: string) {
@@ -44,140 +45,24 @@ export async function checkCommit(filePath: string) {
       console.log(info + chalk.blue(" No commit message provided. Let's create one!\n"));
     }
 
-    // Type selection
-    const types = [
-      'feat',
-      'fix',
-      'docs',
-      'style',
-      'refactor',
-      'perf',
-      'test',
-      'build',
-      'ci',
-      'chore',
-      'revert',
-      'custom',
-    ];
-    const selectedType = await selectType('Choose a commit type:', types);
-    let customType = '';
+    const newMessage = await runCommitMsgPrompt(message);
 
-    if (selectedType === 'custom') {
-      while (true) {
-        const inputCustomType = await askInput('Enter your custom type:');
+    const confirm = await prompt.confirm({
+      message: 'Do you want to commit with this message?',
+      initialValue: true,
+    });
 
-        if (inputCustomType.trim() === '') {
-          console.log(error + chalk.red(' Please enter a non-empty string for the custom type.\n'));
-        } else if (!/^[a-z]+$/.test(inputCustomType)) {
-          console.log(
-            error + chalk.red(' Invalid type string. Please enter lowercase letters only.\n')
-          );
-        } else {
-          customType = inputCustomType;
-          break;
-        }
-      }
+    if (prompt.isCancel(confirm) || !confirm) {
+      prompt.cancel(chalk.bgYellow.black(' CANCELED ') + chalk.yellow(' Commit has been aborted.'));
+      process.exit(1);
     }
 
-    // Input scope (optional)
-    const scope = await askInput('Please enter scope (optional):', '');
-    scope.trim();
-
-    // Enter the summary (subject) (set the original message as the initial value)
-    let subject = '';
-    while (true) {
-      subject = await askInput('Please enter a commit summary (subject):', message);
-
-      if (subject.trim() === '') {
-        console.log(
-          error + chalk.red(' Please enter a non-empty string for the commit summary.\n')
-        );
-      } else {
-        break;
-      }
-    }
-
-    console.log('\n');
-
-    // 3.5 Adding body message (optional)
-    console.log(
-      chalk.bgBlue.white(' NEXT >> ') +
-        chalk.cyan(' Enter a longer description (body) (optional).') +
-        chalk.gray.italic('\n Press Enter on an empty line to finish.\n')
+    // Save the file
+    fs.writeFileSync(filePath, newMessage, 'utf-8');
+    prompt.outro(
+      '\n' + success + chalk.green(' Modify the commit message and continue with the commit!')
     );
-
-    const bodyLines: string[] = [];
-    while (true) {
-      const line = await askInput(`Line ${bodyLines.length + 1}:`, '');
-      if (line === '') {
-        break; // Exit the loop when a blank line is entered
-      }
-      bodyLines.push(line);
-    }
-    const body = bodyLines.join('\n'); // Combine collected lines with newline characters
-    console.log('\n');
-
-    // BREAKING CHANGE
-    const isBreakingChange = await askConfirm('Are there any BREAKING changes?', false);
-    let breakingDesc = '';
-    if (isBreakingChange) {
-      while (true) {
-        breakingDesc = await askInput('Describe the breaking changes:');
-        if (breakingDesc.trim() === '') {
-          console.log(error + chalk.red(' Breaking change description cannot be empty.\n'));
-        } else {
-          break;
-        }
-      }
-    }
-    console.log('\n');
-
-    // Issue reference
-    const issueRef = await askInput(
-      'Does this commit close any issues? (e.g., Closes #123) (optional):',
-      ''
-    );
-
-    // 4. Assembling a new message
-    const cleanScope = scope.replace(/[()]/g, '').trim();
-    const scopeStr = cleanScope ? `(${cleanScope})` : '';
-    const breakingMarker = isBreakingChange ? '!' : '';
-
-    let newMessage = `${customType || selectedType}${scopeStr}${breakingMarker}: ${subject}`;
-
-    if (body.trim() !== '') {
-      newMessage += `\n\n${body.trim()}`;
-    }
-
-    // Add footers
-    const footers = [];
-    if (isBreakingChange) {
-      footers.push(`BREAKING CHANGE: ${breakingDesc.trim()}`);
-    }
-    if (issueRef.trim() !== '') {
-      footers.push(issueRef.trim());
-    }
-
-    if (footers.length > 0) {
-      newMessage += `\n\n${footers.join('\n')}`;
-    }
-
-    console.log(`\n${chalk.cyan('Generated message:')} \n${chalk.green.bold(newMessage)}\n`);
-
-    // 5. Final confirmation
-    const confirm = await askConfirm('Do you want to commit with this message?', true);
-
-    if (confirm) {
-      // Save the file
-      fs.writeFileSync(filePath, newMessage, 'utf-8');
-      console.log(
-        '\n' + success + chalk.green(' Modify the commit message and continue with the commit!')
-      );
-      process.exit(0);
-    } else {
-      console.log('\n' + error + chalk.red(' Commit has been aborted.'));
-      process.exit(1); // Ended with error (aborts commit)
-    }
+    process.exit(0);
   } catch (err) {
     console.error(error + chalk.red(' An error has occurred:'), err);
     process.exit(1);
