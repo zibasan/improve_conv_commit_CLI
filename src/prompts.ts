@@ -1,6 +1,7 @@
 import * as prompt from '@clack/prompts';
 import chalk from 'chalk';
-import { error } from './utils/symbols.js';
+import { getInferredScope } from './utils/git.js';
+import { error, success } from './utils/symbols.js';
 
 const handleCancel = () => {
   prompt.cancel(chalk.bgYellow.black(' CANCELED ') + chalk.yellow(' Commit has been aborted.'));
@@ -9,6 +10,22 @@ const handleCancel = () => {
 
 export async function runCommitMsgPrompt(message: string | null) {
   prompt.intro(chalk.magenta('🪄  commit-wand') + chalk.gray(' Welcome to commit-wand!'));
+
+  const s = prompt.spinner();
+  s.start(
+    chalk.bgBlue.white(' ANALYZING ') + chalk.blue(' Analyzing staged files to suggest a scope...')
+  );
+  const inferredScope = getInferredScope();
+
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  if (inferredScope) {
+    s.stop(
+      success + chalk.green(` Parsed the changes. Inferred scope: ${chalk.yellow(inferredScope)}`)
+    );
+  } else {
+    s.stop(chalk.green(' Parsed the changes. No clear scope inferred.'));
+  }
 
   const answers = await prompt.group(
     {
@@ -76,6 +93,7 @@ export async function runCommitMsgPrompt(message: string | null) {
         prompt.text({
           message: 'Please enter scope (optional):',
           placeholder: 'e.g., ui, core, components',
+          initialValue: inferredScope || undefined,
         }),
 
       subject: () =>
