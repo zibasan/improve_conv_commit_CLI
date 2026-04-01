@@ -1,7 +1,12 @@
 import * as prompt from '@clack/prompts';
 import chalk from 'chalk';
-import { getInferredScope } from './utils/git.js';
-import { error, success } from './utils/symbols.js';
+import gradient, { mind } from 'gradient-string';
+import { getAIScope } from './utils/ai.js';
+import { getApiKey } from './utils/config.js';
+import { error, info, success, warn } from './utils/symbols.js';
+
+const API_KEY = process.env.CW_GEMINI_API_KEY || getApiKey();
+const isAPIKey: boolean = !!API_KEY;
 
 const handleCancel = () => {
   prompt.cancel(chalk.bgYellow.black(' CANCELED ') + chalk.yellow(' Commit has been aborted.'));
@@ -10,21 +15,92 @@ const handleCancel = () => {
 
 export async function runCommitMsgPrompt(message: string | null) {
   prompt.intro(chalk.magenta('🪄  commit-wand') + chalk.gray(' Welcome to commit-wand!'));
+  const aiGradient = gradient(['#00e5ff', '#0072ff', '#8a2be2', '#ff00d9', '#ff0d00']);
 
   const s = prompt.spinner();
-  s.start(
-    chalk.bgBlue.white(' ANALYZING ') + chalk.blue(' Analyzing staged files to suggest a scope...')
-  );
-  const inferredScope = getInferredScope();
 
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  let animationTimer: NodeJS.Timeout | null = null;
 
-  if (inferredScope) {
-    s.stop(
-      success + chalk.green(` Parsed the changes. Inferred scope: ${chalk.yellow(inferredScope)}`)
+  if (isAPIKey === true) {
+    s.start(
+      chalk.bgMagenta.white(' INFO ') +
+        aiGradient(' Gemini API Key was detected. Start analyzing changes with Gemini...')
     );
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const trackWidth = 20;
+    const barWidth = 7;
+    let position = 0;
+    let direction = 1;
+
+    const barChars = '███████';
+    const coloredBar = mind(barChars);
+
+    animationTimer = setInterval(() => {
+      const leftEmpty = ' '.repeat(position);
+      const rightEmpty = ' '.repeat(trackWidth - barWidth - position);
+
+      const frame = chalk.gray('[') + leftEmpty + coloredBar + rightEmpty + chalk.gray(']');
+
+      s.message(
+        chalk.bgMagenta.white(' ANALYZING ') + aiGradient(' Gemini is analyzing... ') + frame
+      );
+
+      position += direction;
+
+      if (position === 0 || position === trackWidth - barWidth) {
+        direction *= -1;
+      }
+    }, 60);
   } else {
-    s.stop(chalk.green(' Parsed the changes. No clear scope inferred.'));
+    s.start(
+      chalk.bgBlue.white(' ANALYZING ') +
+        chalk.blue(' Analyzing staged files to suggest a scope...')
+    );
+  }
+
+  const { scope: inferredScope, error: aiError, tokens } = await getAIScope();
+
+  if (animationTimer) {
+    clearInterval(animationTimer);
+  }
+
+  if (aiError) {
+    prompt.log.warn(error + chalk.red(` Gemini API Error: ${aiError}`));
+
+    if (inferredScope) {
+      s.stop(
+        warn +
+          chalk.yellow(
+            ` Inferred with rule-based approach due to Gemini API error: ${inferredScope}`
+          )
+      );
+    } else {
+      s.stop(
+        warn +
+          chalk.yellow(
+            ' A Gemini API error has occurred. Rule-based scope inference was also not possible, so there is no inferred scope.'
+          )
+      );
+    }
+  } else {
+    if (inferredScope) {
+      s.stop(
+        success + chalk.green(` Parsed the changes. Inferred scope: ${chalk.yellow(inferredScope)}`)
+      );
+      if (tokens) {
+        prompt.note(
+          info +
+            chalk.cyan(
+              ` Token Usage: ${chalk.yellow(tokens.total)} ` +
+                `(Prompt: ${chalk.yellow(tokens.prompt)}, Response: ${chalk.yellow(tokens.candidate)})`
+            )
+        );
+      }
+    } else {
+      s.stop(chalk.yellow(' Parsed the changes. No clear scope inferred.'));
+    }
   }
 
   const answers = await prompt.group(
