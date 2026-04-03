@@ -15,15 +15,15 @@ Stop wrestling with git hooks that just yell at you. `commit-wand` catches your 
 
 ## ✨ Features
 
-- **Interactive Fixes:** If your commit message fails the [Conventional Commits](https://www.conventionalcommits.org/) spec, it prompts you to fix it on the fly.
-- **Full Spec Support:** Supports custom types, scopes, multi-line bodies, and `BREAKING CHANGE` footers.
-- **Zero Config:** Works out of the box with reasonable defaults.
-- **Husky Ready:** Perfectly integrates with `commit-msg` git hooks.
+- **⚒️ Interactive Fixes:** If your commit message fails the [Conventional Commits](https://www.conventionalcommits.org/) spec, it prompts you to fix it on the fly.
+- **🪄 AI Auto-Inference:** Analyzes your staged changes (`git diff`) and past commit history using the Gemini API to automatically suggest the perfect scope and subject.
+- **🧠 Smart Fallback:** When the Gemini API is disabled or down, you can use rule-based inference for scopes and commit titles as a fallback.
+- **🛡️ Staging Assistant:** Detects forgotten unstaged files and politely asks if you want to `git add` them before committing.
+- **✅ Full Spec Support:** Supports custom types, scopes, multi-line bodies, and `BREAKING CHANGE` footers.
+- **0️⃣ Zero Config:** Works out of the box with reasonable defaults.
+- **🎛️ Husky Ready:** Perfectly integrates with `commit-msg` git hooks.
 
 ## 📦 Installation
-
-> [!WARNING]
-> It is **highly** recommended to use `Node.js v22` for commit-wand. It also works on v23 and later, but in that case, if you use `Ctrl+C` to terminate the process during an interactive question, an error message will be displayed due to a known issue in an underlying dependency.
 
 Install `commit-wand` as a development dependency in your project:
 
@@ -40,6 +40,21 @@ yarn add -D commit-wand
 # using bun
 bun add -D commit-wand
 ```
+
+## 🪄 AI Features Setup (Optional)
+
+`commit-wand` can use Google's Gemini API to magically read your changes and suggest the perfect commit summary.
+
+1. Get a free API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+2. Set the key in the CLI:
+
+```bash
+npx cw config set-key <YOUR_GEMINI_API_KEY>
+```
+
+Alternatively, you can set the `CW_GEMINI_API_KEY` environment variable.
+Search your favorite search engine for information on how to set environment variables.
+_(Note: If no key is set, the wand will gracefully fall back to rule-based inference without any errors.)_
 
 ## 🚀 Usage (with Husky)
 
@@ -70,12 +85,49 @@ $ git commit -m "update login button"
 
 ## 💡 Manual Usage
 
-You can also run it manually to check any text file containing a commit message:
+You don't have to wait for a hook to fail! You can launch the wand directly to build your commit from scratch. It will even check if you forgot to `git add` your files:
 
 ```bash
-npx cw path/to/message.txt
-# or use the full command name
-npx commit-wand path/to/message.txt
+npx cw
+# or use the full command name. The '--no-commit' option allows you to only create a commit message and copy it, but do the commit yourself.
+npx commit-wand --no-commit
+```
+
+## 📜 Command Reference
+
+> [!NOTE]
+>
+> - Please use the execution command of your package manager.
+> - Please use "cw" or "commit wand" as the execution command.
+
+### init
+
+```bash
+npx cw init
+```
+
+### Run commit-wand
+
+```bash
+# The bottom two commands are in "Interactive Mode".
+
+# normal execution
+npx cw
+
+# No commit, just create and copy messages
+npx cw --no-commit
+
+# The bottom command is in "Husky Hook Mode". Specifies a specific file and replaces the contents with the generated message, but this command is deprecated as it is a Husky Hook-specific command.
+npx cw [<filePath>]
+```
+
+### Config
+
+```bash
+# Currently only Gemini API key settings are supported.
+
+# Set Gemini API key for AI features
+npx cw config set-key <GEMINI_API_KEY>
 ```
 
 ---
