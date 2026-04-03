@@ -1,7 +1,7 @@
 import * as prompt from '@clack/prompts';
 import chalk from 'chalk';
 import gradient, { mind } from 'gradient-string';
-import { getAIScope } from './utils/ai.js';
+import { getAIInference } from './utils/ai.js';
 import { getApiKey } from './utils/config.js';
 import { error, info, success, warn } from './utils/symbols.js';
 
@@ -60,7 +60,13 @@ export async function runCommitMsgPrompt(message: string | null) {
     );
   }
 
-  const { scope: inferredScope, error: aiError, tokens } = await getAIScope();
+  const {
+    scope: inferredScope,
+    subject: inferredSubject,
+    error: aiError,
+    tokens,
+    isAI,
+  } = await getAIInference();
 
   if (animationTimer) {
     clearInterval(animationTimer);
@@ -69,37 +75,55 @@ export async function runCommitMsgPrompt(message: string | null) {
   if (aiError) {
     prompt.log.warn(error + chalk.red(` Gemini API Error: ${aiError}`));
 
-    if (inferredScope) {
+    if (inferredScope || inferredSubject) {
       s.stop(
         warn +
           chalk.yellow(
-            ` Inferred with rule-based approach due to Gemini API error: ${inferredScope}`
+            ` Candidates for scope and/or subject were suggested, but due to a Gemini API error, rule-based inference was used. \n${chalk.gray('│  ')}Scope: ${inferredScope ? chalk.yellow(inferredScope) : chalk.gray.italic('None')} / Subject: ${inferredSubject ? chalk.yellow(inferredSubject) : chalk.gray.italic('None')}`
           )
       );
     } else {
       s.stop(
         warn +
           chalk.yellow(
-            ' A Gemini API error has occurred. Rule-based scope inference was also not possible, so there is no inferred scope.'
+            ' A Gemini API error has occurred. Rule-based scope and subject inference was also not possible, so there is no inferred scope.'
           )
       );
     }
   } else {
-    if (inferredScope) {
-      s.stop(
-        success + chalk.green(` Parsed the changes. Inferred scope: ${chalk.yellow(inferredScope)}`)
-      );
-      if (tokens) {
-        prompt.note(
-          info +
-            chalk.cyan(
-              ` Token Usage: ${chalk.yellow(tokens.total)} ` +
-                `(Prompt: ${chalk.yellow(tokens.prompt)}, Response: ${chalk.yellow(tokens.candidate)})`
+    if (inferredScope || inferredSubject) {
+      if (isAI) {
+        s.stop(
+          success +
+            chalk.green(
+              ` Parsed the changes. Scope and/or Subject was inferred with Gemini. \n${chalk.gray('│  ')}Scope: ${inferredScope ? chalk.yellow(inferredScope) : chalk.gray.italic('None')}, Subject: ${inferredSubject ? chalk.yellow(inferredSubject) : chalk.gray.italic('None')}`
+            )
+        );
+        if (tokens) {
+          prompt.note(
+            info +
+              chalk.cyan(
+                ` Token Usage: ${chalk.yellow(tokens.total)} ` +
+                  `(Prompt: ${chalk.yellow(tokens.prompt)}, Response: ${chalk.yellow(tokens.candidate)})`
+              )
+          );
+        }
+      } else {
+        s.stop(
+          success +
+            chalk.green(
+              ` Parsed the changes, but ${chalk.yellow('rule-based inference was used')} because something went wrong.\n${chalk.gray('│  ')}It is possible that the difference is not found or the Gemini API key is not set.\n${chalk.gray('│  ')}Scope: ${chalk.yellow(inferredScope || 'None')}, Subject: ${chalk.yellow(inferredSubject || 'None')}`
             )
         );
       }
     } else {
-      s.stop(chalk.yellow(' Parsed the changes. No clear scope inferred.'));
+      s.stop(
+        isAI
+          ? chalk.yellow(' Parsed the changes with Gemini. No clear scope and subject inferred.')
+          : chalk.yellow(
+              ' Parsed the changes with rule-based inference. No clear scope and subject inferred.'
+            )
+      );
     }
   }
 
@@ -176,7 +200,7 @@ export async function runCommitMsgPrompt(message: string | null) {
         prompt.text({
           message: 'Please enter a commit summary (subject):',
           placeholder: 'e.g., add login button',
-          initialValue: message?.split('\n')[0] || undefined,
+          initialValue: message?.split('\n')[0] || inferredSubject || undefined,
           validate: (value) => {
             if (!value) {
               return error + chalk.red('Please enter a non-empty string for the commit summary.');

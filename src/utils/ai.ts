@@ -1,7 +1,7 @@
 import { execSync } from 'node:child_process';
 import { GoogleGenAI } from '@google/genai';
 import { getApiKey } from './config.js';
-import { getInferredScope } from './git.js';
+import { getInferredScope, getInferredSubject, getRecentCommits } from './git.js';
 
 // Check if the user has set the key in the environment variable
 const API_KEY = process.env.CW_GEMINI_API_KEY || getApiKey();
@@ -37,29 +37,35 @@ function parseGeminiError(error: unknown): string {
  * Use AI to infer scope from changes.
  * Fallback to rule-based inference when API key is missing or on error.
  */
-export async function getAIScope(): Promise<{
+export async function getAIInference(): Promise<{
   scope: string | undefined;
+  subject: string | undefined;
   error?: string;
   tokens?: { prompt: number; candidate: number; total: number };
+  isAI: boolean;
 }> {
   if (!API_KEY) {
-    return { scope: getInferredScope() };
+    return { scope: getInferredScope(), subject: getInferredSubject(), isAI: false };
   }
 
   try {
     const diff = execSync('git diff --cached', { encoding: 'utf-8', stdio: 'pipe' });
-
-    if (!diff.trim()) return { scope: undefined };
+    if (!diff.trim()) return { scope: undefined, subject: getInferredSubject(), isAI: false };
 
     const truncatedDiff = diff.length > 3000 ? diff.slice(0, 3000) + '\n...[truncated]' : diff;
 
-    // 4. AIに投げる極秘のプロンプト（指示書）
-    const systemInstruction = `
-You are a senior engineer.
-Analyze the following git diff and infer the most suitable English word for the "scope" in Conventional Commits.
-- Use only lowercase letters (e.g., ui, auth, db, core, components)
-- Do not include any explanations, markdown, or line breaks, just the word
-    `.trim();
+    const recentCommits = getRecentCommits(30);
+    const historyContext = recentCommits
+      ? `\n\n【Past commit history of the project (for reference)】\nAnalyze the following commit history and language to make inferences that fit this project:\n${recentCommits}`
+      : '';
+
+    const systemInstruction =
+      `You are a senior engineer. Infer the "scope" and "Subject" (summary) of Conventional Commits from git diff and past history.
+    Please be sure to output only the following JSON format (no markdown decoration required).
+    {
+      "scope": "a lowercase English word. null if not applicable",
+      "subject": "Commit title (up to 50 characters)"
+    }\n${historyContext}`.trim();
 
     const ai = new GoogleGenAI({ apiKey: API_KEY });
 
@@ -69,10 +75,28 @@ Analyze the following git diff and infer the most suitable English word for the 
       config: {
         systemInstruction: systemInstruction,
         temperature: 0.1,
+        responseMimeType: 'application/json',
       },
     });
 
-    const aiScope = response.text?.trim().toLowerCase();
+    const responseText = response.text?.trim() || '{}';
+    let inferredScope: string | undefined;
+    let inferredSubject: string | undefined;
+
+    try {
+      const parsed = JSON.parse(responseText);
+      inferredScope =
+        parsed.scope && parsed.scope !== 'null' ? String(parsed.scope).toLowerCase() : undefined;
+      inferredSubject =
+        parsed.subject && parsed.subject !== 'null' ? String(parsed.subject) : undefined;
+    } catch {
+      return {
+        scope: getInferredScope(),
+        subject: getInferredSubject(),
+        isAI: false,
+        error: 'Failed to parse AI response as JSON.',
+      };
+    }
 
     const usage = response.usageMetadata;
     const tokens = usage
@@ -83,17 +107,14 @@ Analyze the following git diff and infer the most suitable English word for the 
         }
       : undefined;
 
-    if (!aiScope || aiScope.includes('\n') || aiScope.includes(' ')) {
-      return {
-        scope: getInferredScope(),
-        error:
-          'The AI-generated string was either missing or invalid, so commit-wand switched to rule-based scope inference.',
-      };
-    }
-
-    return { scope: aiScope, tokens };
+    return { scope: inferredScope, subject: inferredSubject, tokens, isAI: true };
   } catch (error) {
     const errorMessage = parseGeminiError(error);
-    return { scope: getInferredScope(), error: errorMessage };
+    return {
+      scope: getInferredScope(),
+      subject: getInferredSubject(),
+      isAI: false,
+      error: errorMessage,
+    };
   }
 }
