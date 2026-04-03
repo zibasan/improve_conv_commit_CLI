@@ -42,68 +42,74 @@ export async function checkCommit(filePath?: string, options: { noCommit?: boole
           prompt.cancel(chalk.bgYellow.black(' CANCELED ') + chalk.yellow(' Commit was aborted.'));
           process.exit(1);
         }
-      } else if (!staged && unstaged) {
-        // [2] If user have changes but none are staged
-        const action = await prompt.select({
-          message: chalk.yellow('Changes detected but nothing is staged. Run `git add .`?'),
-          options: [
-            { value: 'add', label: 'Yes, run `git add .`' },
-            { value: 'ignore', label: 'No, proceed without adding (the commit will be empty)' },
-            { value: 'cancel', label: 'Cancel commit' },
-          ],
-        });
-        if (prompt.isCancel(action) || action === 'cancel') {
-          prompt.cancel(chalk.bgYellow.black(' CANCELED ') + chalk.yellow(' Commit was aborted.'));
-          process.exit(1);
-        }
-        if (action === 'add') {
-          try {
-            execSync('git add -A', { stdio: 'inherit' });
-            prompt.log.success(success + chalk.green(' All files have been staged!'));
-          } catch {
+      } else if (!filePath) {
+        if (!staged && unstaged) {
+          // [2] If user have changes but none are staged
+          const action = await prompt.select({
+            message: chalk.yellow('Changes detected but nothing is staged. Run `git add .`?'),
+            options: [
+              { value: 'add', label: 'Yes, run `git add .`' },
+              { value: 'ignore', label: 'No, proceed without adding (the commit will be empty)' },
+              { value: 'cancel', label: 'Cancel commit' },
+            ],
+          });
+          if (prompt.isCancel(action) || action === 'cancel') {
             prompt.cancel(
-              error +
-                chalk.red(
-                  ' Failed to stage files. (If you ran `git commit`, the index is locked. Please cancel, run `git add` manually, and try again.)'
-                )
+              chalk.bgYellow.black(' CANCELED ') + chalk.yellow(' Commit was aborted.')
             );
             process.exit(1);
           }
-        }
-      } else if (staged && unstaged) {
-        // [3] If there is a mix of staged and unstaged
-        const msg = hasPartiallyStaged
-          ? chalk.red(
-              'Partially staged files detected (`git add -p`). Running `git add .` will stage all lines.\n'
-            ) + chalk.yellow('Do you want to stage all changes with `git add .`?')
-          : chalk.yellow(
-              'Staged and unstaged changes detected. Run `git add .` to stage all changes?'
-            );
+          if (action === 'add') {
+            try {
+              execSync('git add -A', { stdio: 'inherit' });
+              prompt.log.success(success + chalk.green(' All files have been staged!'));
+            } catch {
+              prompt.cancel(
+                error +
+                  chalk.red(
+                    ' Failed to stage files. (If you ran `git commit`, the index is locked. Please cancel, run `git add` manually, and try again.)'
+                  )
+              );
+              process.exit(1);
+            }
+          }
+        } else if (staged && unstaged) {
+          // [3] If there is a mix of staged and unstaged
+          const msg = hasPartiallyStaged
+            ? chalk.red(
+                'Partially staged files detected (`git add -p`). Running `git add .` will stage all lines.\n'
+              ) + chalk.yellow('Do you want to stage all changes with `git add .`?')
+            : chalk.yellow(
+                'Staged and unstaged changes detected. Run `git add .` to stage all changes?'
+              );
 
-        const action = await prompt.select({
-          message: msg,
-          options: [
-            { value: 'add', label: 'Yes, run `git add .`' },
-            { value: 'ignore', label: 'No, proceed with currently staged files' },
-            { value: 'cancel', label: 'Cancel commit' },
-          ],
-        });
-        if (prompt.isCancel(action) || action === 'cancel') {
-          prompt.cancel(chalk.bgYellow.black(' CANCELED ') + chalk.yellow(' Commit was aborted.'));
-          process.exit(1);
-        }
-        if (action === 'add') {
-          try {
-            execSync('git add -A', { stdio: 'inherit' });
-            prompt.log.success(success + chalk.green(' All files have been staged!'));
-          } catch {
+          const action = await prompt.select({
+            message: msg,
+            options: [
+              { value: 'add', label: 'Yes, run `git add .`' },
+              { value: 'ignore', label: 'No, proceed with currently staged files' },
+              { value: 'cancel', label: 'Cancel commit' },
+            ],
+          });
+          if (prompt.isCancel(action) || action === 'cancel') {
             prompt.cancel(
-              error +
-                chalk.red(
-                  ' Failed to stage file (If you ran `git commit`, the index is locked. Please cancel, run `git add` manually, and try again.)'
-                )
+              chalk.bgYellow.black(' CANCELED ') + chalk.yellow(' Commit was aborted.')
             );
             process.exit(1);
+          }
+          if (action === 'add') {
+            try {
+              execSync('git add -A', { stdio: 'inherit' });
+              prompt.log.success(success + chalk.green(' All files have been stage'));
+            } catch {
+              prompt.cancel(
+                error +
+                  chalk.red(
+                    ' Failed to stage file (If you ran `git commit`, the index is locked. Please cancel, run `git add` manually, and try again.)'
+                  )
+              );
+              process.exit(1);
+            }
           }
         }
       }
@@ -148,6 +154,14 @@ export async function checkCommit(filePath?: string, options: { noCommit?: boole
           process.exit(0); // Successful completion (committed as is)
         }
 
+        if (!process.stdout.isTTY) {
+          console.error(
+            '[WARN] Interactive prompts are not supported in this environment (e.g., GUI Git client).' +
+              ' Please correct the message in your Git client, or use the terminal to commit.'
+          );
+          process.exit(1);
+        }
+
         // 3. Display a prompt if the terms are violated
         console.log(
           warn + chalk.yellow(' The commit message is not compliant with Conventional Commits.')
@@ -155,6 +169,13 @@ export async function checkCommit(filePath?: string, options: { noCommit?: boole
         console.log(chalk.cyan(`Current message: ${message}\n`));
         console.log(chalk.cyan(`Please create a new commit message.\n`));
       } else {
+        if (!process.stdout.isTTY) {
+          console.error(
+            '[WARN] Interactive prompts are not supported in this environment(e.g., GUI Git client). Please provide a message.'
+          );
+          process.exit(1);
+        }
+
         console.log(info + chalk.blue(" No commit message provided. Let's create one!\n"));
       }
     } else {
