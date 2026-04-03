@@ -43,7 +43,7 @@ export async function initHusky() {
   ).start();
   try {
     const hookPath = path.join(huskyDir, 'commit-msg');
-    const hookContent = `#!/usr/bin/env sh\necho "hint: Waiting for CLI to review and modify your commit message..."\nexec < /dev/tty\nnpx cw "$1"\n`;
+    const hookContent = `if [ -t 1 ]; then\nexec < /dev/tty\nfi\nnpx cw "$1"\n`;
 
     fs.writeFileSync(hookPath, hookContent, { encoding: 'utf-8', mode: 0o755 });
 

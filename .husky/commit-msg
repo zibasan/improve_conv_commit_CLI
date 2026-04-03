@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
-echo "hint: Waiting for CLI to review and modify your commit message..."
-exec < /dev/tty
+if [ -t 1 ]; then
+  exec < /dev/tty
+fi
 pnpm tsx src/index.ts "$1"
