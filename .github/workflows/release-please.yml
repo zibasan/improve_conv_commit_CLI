@@ -8,6 +8,10 @@ name: release-please
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
     steps:
@@ -40,6 +44,5 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
 
-      - run: npm whoami
-
-      - run: npm publish --provenance --access public
+      - name: Publish npm
+        run: npm publish --provenance --access public
