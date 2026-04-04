@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.65](https://github.com/zibasan/commit-wand/compare/v2.0.64...v2.0.65) (2026-04-04)
+
+
+### Bug Fixes
+
+* workflow file - 4; release v2.0.65 ([8daa006](https://github.com/zibasan/commit-wand/commit/8daa006dae29ff5588c9a30d2171702a37953879))
+
 ## [2.0.64](https://github.com/zibasan/commit-wand/compare/v2.0.61...v2.0.64) (2026-04-04)
 
 
