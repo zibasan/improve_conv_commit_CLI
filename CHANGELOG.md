@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.61](https://github.com/zibasan/commit-wand/compare/v2.0.6...v2.0.61) (2026-04-04)
+
+
+### Bug Fixes
+
+* workflow file name ([000e021](https://github.com/zibasan/commit-wand/commit/000e021862c3f09533c141cab5e9fa258efb2c75))
+
 ## [2.0.6](https://github.com/zibasan/commit-wand/compare/v2.0.5...v2.0.6) (2026-04-04)
 
 
