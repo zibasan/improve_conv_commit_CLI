@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.62](https://github.com/zibasan/commit-wand/compare/v2.0.61...v2.0.62) (2026-04-04)
+
+
+### Miscellaneous Chores
+
+* trigger release v2.0.62 ([397b7ad](https://github.com/zibasan/commit-wand/commit/397b7ad06d3905a5bb4b8412dd64e199c6d556ad))
+
 ## [2.0.61](https://github.com/zibasan/commit-wand/compare/v2.0.6...v2.0.61) (2026-04-04)
 
 
