@@ -21,6 +21,20 @@ jobs:
           release-type: node
           target-branch: master
 
+      - name: (DEBUG) npm version
+        run: npm -v
+
+      - name: Debug OIDC
+        run: |
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL=$ACTIONS_ID_TOKEN_REQUEST_URL"
+          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN=$ACTIONS_ID_TOKEN_REQUEST_TOKEN"
+
+      - name: (DEBUG) Check npm auth
+        run: npm whoami
+
+      - name: (DEBUG) npm publish test
+        run: npm publish --provenance --access public
+
       - uses: actions/checkout@v4
         if: ${{ steps.release.outputs.release_created }}
 
@@ -35,15 +49,13 @@ jobs:
           node-version: "22"
           cache: "pnpm"
           registry-url: "https://registry.npmjs.org"
+          always-auth: true
 
       - name: Install dependencies and Build
         if: ${{ steps.release.outputs.release_created }}
         run: |
           pnpm install --frozen-lockfile
           pnpm run build
-
-      - name: Check npm auth
-        run: npm whoami
 
       - name: Publish to npm
         if: ${{ steps.release.outputs.release_created }}
