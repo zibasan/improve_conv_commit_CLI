@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.2](https://github.com/zibasan/commit-wand/compare/v2.0.1...v2.0.2) (2026-04-04)
+
+
+### Bug Fixes
+
+* Merge https://github.com/zibasan/improve_conv_commit_CLI ([124a231](https://github.com/zibasan/commit-wand/commit/124a231ff00de0a43c21804fa11c734e4eb13d96))
+* migrate to npm trusted publishing ([a5f2f1f](https://github.com/zibasan/commit-wand/commit/a5f2f1f9ceaf9ed643515f4c7a1a7f1ffdf0ad0b))
+
 ## [2.0.1](https://github.com/zibasan/commit-wand/compare/v2.0.0...v2.0.1) (2026-04-03)
 
 
