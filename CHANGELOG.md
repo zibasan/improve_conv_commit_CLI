@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.71](https://github.com/zibasan/commit-wand/compare/v2.0.7...v2.0.71) (2026-04-04)
+
+
+### Continuous Integration
+
+* update node to 24 for npm OIDC; release v2.0.71 ([99ef13c](https://github.com/zibasan/commit-wand/commit/99ef13c5506498595620f4a0206f66da8fb75414))
+
 ## [2.0.7](https://github.com/zibasan/commit-wand/compare/v2.0.68...v2.0.7) (2026-04-04)
 
 
