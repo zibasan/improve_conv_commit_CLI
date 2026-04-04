@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.5](https://github.com/zibasan/commit-wand/compare/v2.0.4...v2.0.5) (2026-04-04)
+
+
+### Bug Fixes
+
+* add registry-url back for npm OIDC ([1f6f3d6](https://github.com/zibasan/commit-wand/commit/1f6f3d6b7ad50c2685312b98f4c7b925ee91289d))
+
 ## [2.0.4](https://github.com/zibasan/commit-wand/compare/v2.0.2...v2.0.4) (2026-04-04)
 
 
