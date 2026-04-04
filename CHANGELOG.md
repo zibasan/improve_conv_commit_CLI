@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.0.64](https://github.com/zibasan/commit-wand/compare/v2.0.61...v2.0.64) (2026-04-04)
+
+
+### Bug Fixes
+
+* workflow file - 2; release v2.0.63 ([ae337f7](https://github.com/zibasan/commit-wand/commit/ae337f7c732cd8033bc8c05985687563c08c49b5))
+* workflow file - 3; release v2.0.64 ([a4be93f](https://github.com/zibasan/commit-wand/commit/a4be93f8833c3eb86fad847aff7fa9905a560e7f))
+
+
+### Miscellaneous Chores
+
+* trigger release v2.0.62 ([397b7ad](https://github.com/zibasan/commit-wand/commit/397b7ad06d3905a5bb4b8412dd64e199c6d556ad))
+
 ## [2.0.61](https://github.com/zibasan/commit-wand/compare/v2.0.6...v2.0.61) (2026-04-04)
 
 
