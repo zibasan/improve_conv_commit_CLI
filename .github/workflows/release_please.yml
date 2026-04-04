@@ -42,6 +42,9 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm run build
 
+      - name: Check npm auth
+        run: npm whoami
+
       - name: Publish to npm
         if: ${{ steps.release.outputs.release_created }}
         run: npm publish --provenance
