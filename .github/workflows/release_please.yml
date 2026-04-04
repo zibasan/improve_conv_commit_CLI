@@ -44,4 +44,4 @@ jobs:
 
       - name: Publish to npm
         if: ${{ steps.release.outputs.release_created }}
-        run: pnpm publish --no-git-checks --provenance
+        run: npm publish --no-git-checks --provenance
