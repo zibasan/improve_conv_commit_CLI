@@ -4,16 +4,26 @@ on:
     types:
       - completed
 
+name: publish
+
 jobs:
   publish:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
 
+    # release-please成功 + masterブランチのみ
+    if: >
+      ${{
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'master'
+      }}
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # ← タグ取得に必須
 
       - uses: pnpm/action-setup@v3
         with:
@@ -24,9 +34,25 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run build
+      - name: Check if this commit has a tag
+        id: tagcheck
+        run: |
+          if git describe --tags --exact-match >/dev/null 2>&1; then
+            echo "tag=true" >> $GITHUB_OUTPUT
+          else
+            echo "tag=false" >> $GITHUB_OUTPUT
+          fi
 
-      - run: npm whoami
+      - name: Install dependencies and Build
+        if: steps.tagcheck.outputs.tag == 'true'
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
 
-      - run: npm publish --provenance --access public
+      - name: Check npm auth (debug)
+        if: steps.tagcheck.outputs.tag == 'true'
+        run: npm whoami
+
+      - name: Publish to npm
+        if: steps.tagcheck.outputs.tag == 'true'
+        run: npm publish --provenance --access public
