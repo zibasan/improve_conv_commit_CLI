@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.3](https://github.com/zibasan/commit-wand/compare/v2.0.2...v2.0.3) (2026-04-04)
+
+
+### Bug Fixes
+
+* use npm publish instead of pnpm for OIDC ([95747d6](https://github.com/zibasan/commit-wand/commit/95747d6f04b5d0cc72afa794106496b2459dc848))
+
 ## [2.0.2](https://github.com/zibasan/commit-wand/compare/v2.0.1...v2.0.2) (2026-04-04)
 
 
